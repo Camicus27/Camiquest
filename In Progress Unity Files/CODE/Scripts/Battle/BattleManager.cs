@@ -233,13 +233,9 @@ public class BattleManager : MonoBehaviour
         }
 
         // End battle with successful escape
-        if (runChance > Random.value)
+        if (runChance > Random.value) 
         {
-            playerUnit.RunAway();
-            battleResult = "run";
-            GameManager.instance.StopSound("BattleMusic", 3f);
-            yield return new WaitUntil(playerUnit.IsDead);
-            yield return dialogBox.TypeDialog("You successfully escaped..");
+            battleResult = "playerRan";
             state = BattleState.Finished;
         }
         // End turn
@@ -627,12 +623,21 @@ public class BattleManager : MonoBehaviour
     {
         GameManager.instance.StopSound("BattleMusic", 5f);
 
+        // Player died
         if (battleResult == "lose")
         {
             playerUnit.Death();
             yield return dialogBox.TypeDialog(GameManager.instance.playerName + " was killed!");
             yield return dialogBox.TypeDialog("A hero has fallen.", 2f);
         }
+        // Player ran away
+        else if (battleResult == "playerRan")
+        {
+            playerUnit.RunAway();
+            yield return new WaitUntil(playerUnit.IsDead);
+            yield return dialogBox.TypeDialog("You successfully escaped..");
+        }
+        // Player won or the enemy ran away
         else
         {
             int XP;
