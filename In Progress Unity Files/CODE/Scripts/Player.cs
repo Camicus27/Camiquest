@@ -22,19 +22,16 @@ public class Player : MovingEntity
         xSpeed = 1f;
         ySpeed = .8f;
 
-        strength = 0f;
-        toughness = 0f;
-
         allMoves = new List<Move>();
         moveSet = new Move[] { };
         // Sword
         AddMoveToMoveOptions(Moves.GetSpecificMove("KINETIC", 0));
 
-        //AddMoveToMoveOptions(Moves.GetRandomMoveOfType("FIRE"));
-        //AddMoveToMoveOptions(Moves.GetRandomMoveOfType("WATER"));
-        //AddMoveToMoveOptions(Moves.GetRandomMoveOfType("EARTH"));
-        //AddMoveToMoveOptions(Moves.GetRandomMoveOfType("TOXIC"));
-        //AddMoveToMoveOptions(Moves.GetRandomMoveOfType("UNDEAD"));
+        AddMoveToMoveOptions(Moves.GetRandomMoveOfType("FIRE"));
+        AddMoveToMoveOptions(Moves.GetRandomMoveOfType("WATER"));
+        AddMoveToMoveOptions(Moves.GetRandomMoveOfType("EARTH"));
+        AddMoveToMoveOptions(Moves.GetRandomMoveOfType("TOXIC"));
+        AddMoveToMoveOptions(Moves.GetRandomMoveOfType("UNDEAD"));
 
         items = new Dictionary<Item, int>();
         items.Add(new Item("Health"), 2);
@@ -103,20 +100,20 @@ public class Player : MovingEntity
         switch (item.type)
         {
             case "HEALTH":
-                GameManager.instance.health += item.effectivenessPoints;
+                GameManager.instance.health += item.GetEP();
                 if (GameManager.instance.health > GameManager.instance.maxHealth)
                     GameManager.instance.health = GameManager.instance.maxHealth;
                 break;
             case "MANA":
-                GameManager.instance.MP += item.effectivenessPoints;
+                GameManager.instance.MP += item.GetEP();
                 if (GameManager.instance.MP > GameManager.instance.maxMana)
                     GameManager.instance.MP = GameManager.instance.maxMana;
                 break;
             case "STRENGTH":
-                strength += item.effectivenessPoints;
+                strength += item.GetEP();
                 break;
             case "TOUGHNESS":
-                toughness += item.effectivenessPoints;
+                toughness += item.GetEP();
                 break;
 
         }
@@ -170,6 +167,12 @@ public class Player : MovingEntity
     public bool HasMove(Move move)
     {
         return allMoves.Contains(move);
+    }
+
+    public void ShowAllDamageImprovements()
+    {
+        foreach (Move move in moveSet)
+            move.ImproveDamageBy((int)(move.damage * (1 + strength / 30)));
     }
 
     public DamageDetails TakeDamage(Move move, Enemy attacker)
