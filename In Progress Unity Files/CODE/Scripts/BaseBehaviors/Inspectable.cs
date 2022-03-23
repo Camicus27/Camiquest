@@ -8,6 +8,8 @@ public class Inspectable : Interactable
     public string[] otherInteractMessages;
     public bool onlyOneInteractionMessage;
     public bool canOnlyHaveOneInteraction;
+    public bool givesThePlayerGold;
+    public int goldToGive;
     protected int interactNumber = 0;
 
     private static bool hasInteractedWithSomethingTooMuch = false;
@@ -25,11 +27,18 @@ public class Inspectable : Interactable
 
     private IEnumerator Interaction()
     {
+        // Only one time interacting
         if (canOnlyHaveOneInteraction)
         {
             // Display the message
             foreach (string message in firstInteractMessages)
                 yield return GameManager.instance.ShowTextInfo(message);
+
+            if (givesThePlayerGold)
+            {
+                yield return new WaitForSeconds(.2f);
+                yield return GameManager.instance.ShowTextInfo("* You received " + goldToGive + " gold!");
+            }
             // Resume the player's movement
             GameManager.instance.player.GetComponent<Player>().canMove = true;
             GameManager.instance.invCanBeShown = true;
@@ -38,38 +47,60 @@ public class Inspectable : Interactable
             isInRange = false;
             yield break;
         }
+        // Multiple interactions possible
         else
         {
+            // If there's only one thing this displays
             if (onlyOneInteractionMessage)
             {
                 foreach (string message in firstInteractMessages)
                     yield return GameManager.instance.ShowTextInfo(message);
+
+                if (givesThePlayerGold)
+                {
+                    givesThePlayerGold = false;
+                    yield return new WaitForSeconds(.2f);
+                    yield return GameManager.instance.ShowTextInfo("* You received " + goldToGive + " gold!");
+                }
             }
+            // If this thing may display multiple things over multiple interactions
             else
             {
+                // First interaction
                 if (interactNumber == 0)
                 {
                     foreach (string message in firstInteractMessages)
                         yield return GameManager.instance.ShowTextInfo(message);
+
+                    if (givesThePlayerGold)
+                    {
+                        givesThePlayerGold = false;
+                        yield return new WaitForSeconds(.2f);
+                        yield return GameManager.instance.ShowTextInfo("* You received " + goldToGive + " gold!");
+                    }
+
                     interactNumber++;
                 }
-                else if (secondInteractMessages.Length > 0 && interactNumber == 1)
+                // Second interaction
+                else if (secondInteractMessages.Length > 0 && 0 < interactNumber && interactNumber < 25)
                 {
                     foreach (string message in secondInteractMessages)
                         yield return GameManager.instance.ShowTextInfo(message);
                     interactNumber++;
                 }
-                else if (otherInteractMessages.Length > 0 && interactNumber > 1)
+                // Third - Twenty-Fifth interaction
+                else if (otherInteractMessages.Length > 0 && 0 < interactNumber && interactNumber < 25)
                 {
                     foreach (string message in otherInteractMessages)
                         yield return GameManager.instance.ShowTextInfo(message);
                     interactNumber++;
                 }
-                if (!hasInteractedWithSomethingTooMuch && interactNumber == 99)
+                // Twenty-Sixth interaction (only happens once)
+                else if (!hasInteractedWithSomethingTooMuch && 0 < interactNumber && interactNumber < 25)
                 {
                     string message = "Yeesh. Can you PLEASE stop interacting with this? It's exhausting to display.";
                     yield return GameManager.instance.ShowTextInfo(message);
-                    message = "You really interacted with this thing 100 times? Get a life, get a hobby, get SOMETHING.";
+                    message = "You interacted with this thing 25 times? The dialog was that interesting? Get a life, get a hobby, get SOMETHING.";
                     yield return GameManager.instance.ShowTextInfo(message);
                     message = "You know what? You can't interact with this thing anymore, I don't even care. You're done.";
                     yield return GameManager.instance.ShowTextInfo(message);

@@ -9,8 +9,9 @@ public class Interactable : MonoBehaviour
 
     protected virtual void Update()
     {
-        // If object is interactable and not currently interacting and within range
-        if (isInteractable && !currentlyInteracting && Vector3.Distance(GameManager.instance.player.transform.position, transform.position) < interactRange)
+        // If object is interactable and not currently interacting and within range and menu is not currently showing
+        if (isInteractable && !currentlyInteracting && Vector3.Distance(GameManager.instance.player.transform.position, transform.position) < interactRange &&
+            !GameManager.instance.invObj.activeSelf)
         {
             isInRange = true;
             GameManager.instance.keyPrompt.SetActive(true);
