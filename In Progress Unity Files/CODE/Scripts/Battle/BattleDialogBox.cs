@@ -10,7 +10,6 @@ public class BattleDialogBox : MonoBehaviour
     public GameObject moveSelector;
     public Text movesInfoText;
     public Text damageInfoText;
-    public GameObject divider;
     public GameObject information;
     public Text description;
     public Text stats;
@@ -43,7 +42,6 @@ public class BattleDialogBox : MonoBehaviour
     /// Toggle the different text boxes and images
     /// </summary>
     public void ToggleDialogText(bool enabled) { dialogText.enabled = enabled; }
-    public void ToggleDivider(bool enabled) { divider.SetActive(enabled); }
     public void ToggleMoveSelector(bool enabled) { moveSelector.SetActive(enabled); }
     public void ToggleInventorySelector(bool enabled) { inventory.SetActive(enabled); }
     public void ToggleInformation(bool enabled) { information.SetActive(enabled); }
@@ -118,13 +116,9 @@ public class BattleDialogBox : MonoBehaviour
         {
             stats.text = enemy.trait + "\n" + enemy.type + "\nSTRENGTH " + enemy.strength + "\nTOUGHNESS " + enemy.toughness;
         }
-        else if (levelDiff > 0)
-        {
-            stats.text = enemy.trait + "\n" + enemy.type + "\nSTRENGTH ??\nTOUGHNESS ??";
-        }
         else
         {
-            stats.text = "???\n????\nSTRENGTH ??\nTOUGHNESS ??";
+            stats.text = enemy.trait + "\n" + enemy.type + "\nSTRENGTH ??\nTOUGHNESS ??";
         }
 
         description.text = enemy.enemyInfo;
@@ -136,16 +130,16 @@ public class BattleDialogBox : MonoBehaviour
         {
             case 0:
                 item = new Item("Health");
-                itemStats.text = "RESTORES " + item.effectivenessPoints + " HEALTH"; break;
+                itemStats.text = "RESTORES " + item.GetEP() + " HEALTH"; break;
             case 1:
                 item = new Item("Mana");
-                itemStats.text = "RESTORES " + item.effectivenessPoints + " MANA"; break;
+                itemStats.text = "RESTORES " + item.GetEP() + " MANA"; break;
             case 2:
                 item = new Item("Strength");
-                itemStats.text = "+" + item.effectivenessPoints + " STRENGTH"; break;
+                itemStats.text = "+" + item.GetEP() + " STRENGTH"; break;
             case 3:
                 item = new Item("Toughness");
-                itemStats.text = "+" + item.effectivenessPoints + " TOUGHNESS"; break;
+                itemStats.text = "+" + item.GetEP() + " TOUGHNESS"; break;
         }
         // Update the info about the item
         itemInfo.text = item.itemInfo;
@@ -162,6 +156,8 @@ public class BattleDialogBox : MonoBehaviour
             {
                 if (isOut)
                     invSlots[i].GetComponent<Animator>().SetBool("isOut", true);
+                else
+                    invSlots[i].GetComponent<Animator>().SetBool("isOut", false);
                 invSlots[i].GetComponent<Animator>().SetBool("isHighlighted", true);
             }
             else

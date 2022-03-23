@@ -49,6 +49,11 @@ public class EnemyUnit : MonoBehaviour
         anim.SetBool("Lose", true);
     }
 
+    public bool IsBeingHit()
+    {
+        return anim.GetCurrentAnimatorStateInfo(0).IsName("Hit");
+    }
+
     public bool IsDoneWithAnimation()
     {
         return anim.GetCurrentAnimatorStateInfo(0).IsName("Default");

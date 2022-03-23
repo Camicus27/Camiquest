@@ -1,11 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PlayerUnit : MonoBehaviour
 {
     public Animator anim;
+    public Animator slashAnim;
 
     public void Setup()
     {
@@ -22,11 +20,13 @@ public class PlayerUnit : MonoBehaviour
     }
 
     /// <summary>
-    /// "Hit", "Attack", "Consume", or "Healing"
+    /// "Hit", Move Type, "Consume", or "Healing"
     /// </summary>
     public void BattleAction(string action)
     {
         anim.SetTrigger(action);
+        if (slashAnim != null && action.Contains("_"))
+            slashAnim.SetTrigger(action.Substring(7));
     }
 
     public void RunAway()

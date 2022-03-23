@@ -32,6 +32,7 @@ public class BattleManager : MonoBehaviour
     private bool showingInfo = false;
     private string battleResult = "win";
 
+
     // Entry Point ------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -123,7 +124,6 @@ public class BattleManager : MonoBehaviour
     {
         StopAllCoroutines();
         dialogBox.ToggleActionSelector(true, true);
-        dialogBox.ToggleDivider(true);
         dialogBox.ToggleDialogText(true);
         StartCoroutine(dialogBox.TypeDialog("What will you do?"));
         state = BattleState.PlayerAction;
@@ -191,7 +191,6 @@ public class BattleManager : MonoBehaviour
         {
             dialogBox.ToggleActionSelector(false, false);
             dialogBox.ToggleDialogText(false);
-            dialogBox.ToggleDivider(false);
 
             dialogBox.ToggleInformation(true);
             dialogBox.UpdateEnemyInformation(enemy);
@@ -256,7 +255,6 @@ public class BattleManager : MonoBehaviour
             dialogBox.UpdateItemSelection(currentSlot, player.items);
             dialogBox.ToggleActionSelector(false, false);
             dialogBox.ToggleDialogText(false);
-            dialogBox.ToggleDivider(false);
 
             dialogBox.ToggleInventorySelector(true);
             dialogBox.SetItems(player.items);
@@ -322,12 +320,14 @@ public class BattleManager : MonoBehaviour
             }
 
             // Continue the state
+            float oldHP = GameManager.instance.health;
+            float oldMP = GameManager.instance.MP;
             bool didConsume = player.TryConsumeItem(item);
             choosingItem = false;
             dialogBox.ToggleInventorySelector(false);
             dialogBox.ToggleDialogText(true);
             StopAllCoroutines();
-            StartCoroutine(UsePlayerItem(item, didConsume));
+            StartCoroutine(UsePlayerItem(item, didConsume, oldHP, oldMP));
         }
 
         /* This is an implemenation if pages of items were used */
@@ -352,7 +352,7 @@ public class BattleManager : MonoBehaviour
         //}
     }
 
-    private IEnumerator UsePlayerItem(Item item, bool didConsume)
+    private IEnumerator UsePlayerItem(Item item, bool didConsume, float oldHP, float oldMP)
     {
         if (!didConsume)
         {
@@ -367,19 +367,16 @@ public class BattleManager : MonoBehaviour
             playerUnit.BattleAction("Consume");
             yield return dialogBox.TypeDialog("...", 2f);
 
-            float oldHP = GameManager.instance.health;
-            float oldMP = GameManager.instance.MP;
-
             // Type the item effect
             if (item.type == "HEALTH")
             {
                 StartCoroutine(playerHUD.UpdateHP(oldHP));
-                yield return dialogBox.TypeDialog("Restored " + item.effectivenessPoints + " health!");
+                yield return dialogBox.TypeDialog("Restored " + item.GetEP() + " health!");
             }
             else if (item.type == "MANA")
             {
                 StartCoroutine(playerHUD.UpdateMP(oldMP));
-                yield return dialogBox.TypeDialog("Restored " + item.effectivenessPoints + " mana!");
+                yield return dialogBox.TypeDialog("Restored " + item.GetEP() + " mana!");
             }
             else if (item.type == "STRENGTH")
                 yield return dialogBox.TypeDialog("You feel strengthened!");
@@ -404,7 +401,6 @@ public class BattleManager : MonoBehaviour
         {
             dialogBox.ToggleActionSelector(false, false);
             dialogBox.ToggleDialogText(false);
-            dialogBox.ToggleDivider(false);
 
             dialogBox.ToggleMoveSelector(true);
 
@@ -487,7 +483,7 @@ public class BattleManager : MonoBehaviour
             if (!move.isHealing)
             {
                 // Type the move used and wait
-                playerUnit.BattleAction("Attack");
+                playerUnit.BattleAction("Attack_" + move.type);
                 GameManager.instance.PlaySound("PlayerAttack");
                 yield return dialogBox.TypeDialog(GameManager.instance.playerName + " used " + move.moveName + "!");
                 yield return new WaitUntil(playerUnit.IsDoneWithAnimation);
@@ -507,7 +503,6 @@ public class BattleManager : MonoBehaviour
                 GameManager.instance.PlaySound("PlayerHealing");
                 yield return dialogBox.TypeDialog(GameManager.instance.playerName + " used " + move.moveName + "!");
                 yield return new WaitUntil(playerUnit.IsDoneWithAnimation);
-
                 // Pass in the current HP to the HUD and take the damage
                 oldHP = GameManager.instance.health;
                 // Also get the details of the damage
@@ -517,6 +512,19 @@ public class BattleManager : MonoBehaviour
 
             // Display the attack details
             yield return ShowDamageDetails(damageDetails);
+
+            // Improve the skill of the move
+            var moveDetails = move.ImproveSkill();
+            // Check for move level up
+            if (moveDetails.LeveledUp)
+            {
+                //GameManager.instance.PlaySound("MoveImproved");
+                yield return dialogBox.TypeDialog(GameManager.instance.playerName + "\'s move " + move.moveName + " has improved!");
+                yield return dialogBox.TypeDialog(move.moveName + " is now a " + moveDetails.Mastery + " Move!");
+            }
+
+            // Wait for enemy to finish being hit
+            yield return new WaitWhile(enemyUnit.IsBeingHit);
 
             // Check if enemy has died
             if (damageDetails.Died)
@@ -661,10 +669,13 @@ public class BattleManager : MonoBehaviour
             if (GameManager.instance.GetCurrentXP() > GameManager.instance.levelUpXPNeeded)
             {
                 GameManager.instance.LevelUp();
-                yield return dialogBox.TypeDialog(GameManager.instance.playerName + " leveled up to level " + GameManager.instance.level + "!!!", 3f);
-                yield return new WaitForSeconds(3f);
+                yield return dialogBox.TypeDialog(GameManager.instance.playerName + " leveled up to level " + GameManager.instance.level + "!!!");
+                yield return new WaitForSeconds(1.75f);
                 if (GameManager.instance.level == 2)
-                    yield return dialogBox.TypeDialog(GameManager.instance.playerName + " learned " + Moves.GetSpecificMove(player.type, 1).moveName + "!", 2f);
+                {
+                    yield return dialogBox.TypeDialog(GameManager.instance.playerName + " learned " + Moves.GetSpecificMove(player.type, 1).moveName + "!");
+                    yield return new WaitForSeconds(.75f);
+                }
             }
         }
 
