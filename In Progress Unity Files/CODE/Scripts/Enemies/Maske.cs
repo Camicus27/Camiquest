@@ -63,19 +63,17 @@ public class Maske : Enemy
         trait = "TIMID";
         type = "UNDEAD";
 
-        health = 50;
-        maxHealth = 50;
+        // 15% chance for a high level enemy
+        if (Random.value < 0.15)
+            level = 3;
+        else
+            level = Random.Range(1, 3);
+        xpGivenOnDeath = Random.Range(30, 40) + (5 * level);
+
+        health = 50 + (5 * level);
+        maxHealth = 50 + (5 * level);
         toughness += .1f * level;
         strength += .1f * level;
-
-        if (level == 0)
-        {
-            if (Random.value < 0.2)
-                level = Random.Range(2, 3);
-            else
-                level = Random.Range(1, 2);
-        }
-        xpGivenOnDeath = Random.Range(30, 40) + (5 * level);
 
         moveSet = new List<Move>();
         // Run Away!

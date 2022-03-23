@@ -269,8 +269,12 @@ public class Enemy : MovingEntity
     /// </summary>
     public DamageDetails TakeDamage(Move move, Player attacker)
     {
-        // Find type effectiveness
+        // Calculate type bonuses/debuffs
         float effectiveness = TypeChart.GetEffectiveness(move.type, type);
+        float moveSkill;
+        if (attacker.type == move.type) moveSkill = 0.1f;
+        else if (move.type == "KINETIC") moveSkill = 0f;
+        else moveSkill = -0.1f;
 
         // Calculate crit chance
         float critDmg = 1f;
@@ -278,7 +282,7 @@ public class Enemy : MovingEntity
             critDmg = 1.75f;
 
         // Calculate the modifiers
-        float modifiers = ((Random.Range(0.93f, 1f) * critDmg) + (attacker.strength / 33) - (toughness / 33)) * effectiveness;
+        float modifiers = ((Random.Range(0.93f, 1f) * critDmg) + (attacker.strength / 33) - (toughness / 33) + moveSkill) * effectiveness;
 
         // Calculate total damage
         int damage = Mathf.FloorToInt(move.damage * modifiers);

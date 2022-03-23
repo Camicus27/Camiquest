@@ -86,7 +86,7 @@ public class OgreBoss : Enemy
         // Run Away!
         moveSet.Add(Moves.GetSpecificMove("RUNAWAY", 0));
 
-        critChance = 0.01f;
+        critChance = 0.0f;
     }
 
     // Enemy.FixedUpdate() checks for the player within chase distance, checks for collision, and moves/animates
@@ -99,8 +99,8 @@ public class OgreBoss : Enemy
         // Randomly generate a chance number
         float chance = Random.value;
 
-        // If health < 10%
-        if (health < health * 0.1)
+        // If health <= 20%
+        if (health <= health * 0.2)
         {
             // 40% chance for Smash
             if (chance >= .6f)
@@ -120,11 +120,11 @@ public class OgreBoss : Enemy
         // 45% chance to BASH
         if (chance >= .55f)
             move = moveSet[0];
-        // 30% chance to SMASH
-        else if (.55f > chance && chance >= .25f)
+        // 33% chance to SMASH
+        else if (.55f > chance && chance >= .22f)
             move = moveSet[1];
-        // 15% chance to HEAL
-        else if (.25f > chance && chance >= .1f)
+        // 12% chance to HEAL
+        else if (.22f > chance && chance >= .1f)
             move = moveSet[2];
         // 10% chance to HEAD MASH
         else

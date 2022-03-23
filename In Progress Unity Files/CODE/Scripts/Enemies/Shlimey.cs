@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Firite : Enemy
+public class Shlimey : Enemy
 {
     // INHERITANCE TO SET:
     //----------------------------------------------
@@ -73,44 +73,45 @@ public class Firite : Enemy
         }
 
         // Speed setup
-        xSpeed = .35f;
-        ySpeed = .35f;
+        xSpeed = .275f;
+        ySpeed = .275f;
 
         // Chase setup
         triggerLength = 0.5f;
         chaseLength = 0.75f;
 
         // Information setup
-        enemyName = "Firite";
-        enemyInfo = "A small flame with a burning passion.. for fighting YOU!";
-        trait = "BOLD";
-        type = "FIRE";
+        enemyName = "Shlimey";
+        enemyInfo = "A gross ball of slime and sludge... with a face. It smells like battery acid burned" +
+            "through a pile of hair stuck together with sewage. Ew.";
+        trait = "WARY";
+        type = "TOXIC";
 
-        // 30% chance for a high level enemy
-        if (Random.value < 0.3)
-            level = 4;
+        // 35% chance for a high level enemy
+        if (Random.value < 0.35)
+            level = 5;
         else
-            level = Random.Range(2, 4);
-        xpGivenOnDeath = Random.Range(35, 45) + (10 * level);
+            level = Random.Range(3, 5);
+        xpGivenOnDeath = Random.Range(40, 50) + (15 * level);
 
-        health = 70 + (5 * level);
-        maxHealth = 70 + (5 * level);
-        toughness += .2f * level;
-        strength += .2f * level;
+        health = 170 + (5 * level);
+        maxHealth = 170 + (5 * level);
+        toughness += .25f * level;
+        strength += .25f * level;
 
         moveSet = new List<Move>();
         // Run Away!
         moveSet.Add(Moves.GetSpecificMove("RUNAWAY", 0));
-        // Fire Shot
-        moveSet.Add(Moves.GetSpecificMove("FIRE", 0));
-        // Flame Dash
-        moveSet.Add(Moves.GetSpecificMove("FIRE", 1));
-        // Firey Fracture
-        moveSet.Add(Moves.GetSpecificMove("FIRE", 2));
-        // Stoke the Fire
-        moveSet.Add(Moves.GetSpecificMove("FIRE", 3));
+        // Sludge Bomb
+        moveSet.Add(Moves.GetSpecificMove("TOXIC", 0));
+        // Slime Spout
+        moveSet.Add(Moves.GetSpecificMove("TOXIC", 2));
+        // Noxious Blast
+        moveSet.Add(Moves.GetSpecificMove("TOXIC", 3));
+        // Toxic Cleanse
+        moveSet.Add(Moves.GetSpecificMove("TOXIC", 1));
 
-        critChance = 0.03f;
+        critChance = 0.04f;
     }
 
     // Enemy.FixedUpdate() checks for the player within chase distance, checks for collision, and moves/animates
@@ -174,29 +175,29 @@ public class Firite : Enemy
 
     public override Move GetMoveToUse()
     {
-        // Stoke the Fire
-        // Randomly generate a chance number
-        float chance = Random.value;
-
         // If health < 25%
         if (health < health * 0.25)
         {
+            float specialChance = Random.value;
             // 50% chance to Heal
-            if (chance < .5f)
+            if (specialChance < .5f)
                 return moveSet[4];
-            // 15% chance for Firey Fracture
-            else if (chance > .85f)
+            // 20% chance for Noxious Blast
+            else if (specialChance > .85f)
                 return moveSet[3];
         }
 
+        // Randomly generate a chance number
+        float chance = Random.value;
+
         Move move;
-        // 60% chance to Fire Shot
+        // 60% chance to Sludge Bomb
         if (chance > .6f)
             move = moveSet[1];
-        // 30% chance to Flame Dash
+        // 30% chance to Slime Spout
         else if (.6f > chance && chance > .1f)
             move = moveSet[2];
-        // 10% chance to Firey Fracture
+        // 10% chance to Noxious Blast
         else
             move = moveSet[3];
 
