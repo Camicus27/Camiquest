@@ -47,7 +47,7 @@
   <PropertyGroup>
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <UnityProjectGenerator>Package</UnityProjectGenerator>
-    <UnityProjectGeneratorVersion>2.0.12</UnityProjectGeneratorVersion>
+    <UnityProjectGeneratorVersion>2.0.14</UnityProjectGeneratorVersion>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>2020.3.25f1</UnityVersion>
@@ -64,7 +64,6 @@
     <Compile Include="Assets\Scripts\Managers\FarBackgroundScroller.cs" />
     <Compile Include="Assets\Scripts\Managers\CharacterMenu.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
-    <Compile Include="Assets\Scripts\Managers\InventoryManager.cs" />
     <Compile Include="Assets\Scripts\Spike.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
@@ -85,9 +84,11 @@
     <Compile Include="Assets\Scripts\NPCScripts\OldMan.cs" />
     <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
     <Compile Include="Assets\Scripts\AttemptToLeave.cs" />
+    <Compile Include="Assets\Scripts\NPCScripts\Dwarf.cs" />
     <Compile Include="Assets\Scripts\BattleScripts\BattleManager.cs" />
     <Compile Include="Assets\Scripts\BattleScripts\EnemyUnit.cs" />
     <Compile Include="Assets\Scripts\SpecialLootChest.cs" />
+    <Compile Include="Assets\Scripts\PortalSmall.cs" />
     <Compile Include="Assets\Scripts\BattleScripts\PlayerUnit.cs" />
     <Compile Include="Assets\Scripts\EnemyScripts\OgreBoss.cs" />
     <Compile Include="Assets\Scripts\BattleScripts\BattleHUD.cs" />
@@ -96,9 +97,11 @@
     <Compile Include="Assets\Scripts\Sound.cs" />
     <Compile Include="Assets\Scripts\NPCScripts\RedBeard.cs" />
     <Compile Include="Assets\Scripts\Item.cs" />
+    <Compile Include="Assets\Scripts\EnemyScripts\Shlimey.cs" />
     <Compile Include="Assets\Scripts\Lever.cs" />
     <Compile Include="Assets\Scripts\NPCScripts\Wizard.cs" />
     <Compile Include="Assets\Scripts\EnemyScripts\Firite.cs" />
+    <Compile Include="Assets\Scripts\PortalInteractable.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
