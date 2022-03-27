@@ -53,10 +53,6 @@ public class Maske : Enemy
         xSpeed = .3f;
         ySpeed = .25f;
 
-        // Chase setup
-        triggerLength = 0.5f;
-        chaseLength = 0.75f;
-
         // Information setup
         enemyName = "Maske";
         enemyInfo = "This lil guy uses a scary mask to hide his insecurities... He's kinda cute tho...";

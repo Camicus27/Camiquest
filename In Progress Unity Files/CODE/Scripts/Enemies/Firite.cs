@@ -76,10 +76,6 @@ public class Firite : Enemy
         xSpeed = .35f;
         ySpeed = .35f;
 
-        // Chase setup
-        triggerLength = 0.5f;
-        chaseLength = 0.75f;
-
         // Information setup
         enemyName = "Firite";
         enemyInfo = "A small flame with a burning passion.. for fighting YOU!";

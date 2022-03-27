@@ -133,7 +133,7 @@ public class OgreBoss : Enemy
         return move;
     }
 
-    public void OnDestroy()
+    private void OnDisable()
     {
         lever.ON = true;
     }

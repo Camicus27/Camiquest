@@ -28,6 +28,7 @@ public class Enemy : MovingEntity
     private bool chasing = false;
     private bool returning = false;
     private Transform playerTransform;
+    public bool isFighting = false;
 
     // probably rework this to be more modular, maybe just make the patrol
     // logic virutal and each enemy overrides how they patrol?
@@ -40,7 +41,8 @@ public class Enemy : MovingEntity
     // STATS LOGIC
     // All of this is to be overridden by the specific enemy
     // this is just some 'defaults'
-    public bool isFighting = false;
+    public EnemyData enemyData;
+    public int ID;
     public string enemyName = "DefaultEnemy";
     public int health = 100;
     public int maxHealth = 100;
@@ -60,49 +62,15 @@ public class Enemy : MovingEntity
     public RuntimeAnimatorController battlingAnim;
 
 
-    // Rework this to be more default
     protected override void Start()
     {
         // MovingEntity 'base.Start()' sets up the colliders/animator
         base.Start();
 
+        // Chase/Patrol setup  (can be overridden)
         startingPosition = transform.position;
-
-        //// probably rework this with patrol method
-        //leftPatrolEndpoint = new Vector2(startingPosition.x - 0.7f, startingPosition.y);
-        //rightPatrolEndpoint = new Vector2(startingPosition.x + 0.7f, startingPosition.y);
-        //
-        ////
-        //// Make all the following code specific to an enemy, not done here
-        ////
-        //
-        //xSpeed = .5f;
-        //ySpeed = .5f;
-        //
-        //if (level == 0)
-        //{
-        //    if (Random.value < 0.2)
-        //        level = Random.Range(2, 3);
-        //    else
-        //        level = Random.Range(1, 2);
-        //}
-        //
-        //toughness += .9f * level;
-        //strength += .9f * level;
-        //xpGivenOnDeath = (int)(Random.Range(10f, 15f) * level);
-        //
-        //moveSet = new List<Move>(2);
-        //moveSet.Add(null); moveSet.Add(null);
-        //else if (enemyName == "Firite")
-        //{
-        //    moveSet[0] = new Move("Fire Flick", "Flick a few small shards of flame and ashes.", "FIRE", 20, 0);
-        //    moveSet[1] = new Move("Ignite", "Fuels the fire.", "PURE", 20, 0, true);
-        //}
-        //else if (enemyName == "Destro the Ogre")
-        //{
-        //    moveSet[0] = new Move("Smash", "Smash enemies using your large fists.", "KINETIC", 30, 0);
-        //    moveSet[1] = new Move("Head Bash", "Violently hurl yourself at your enemy.", "KINETIC", 50, 0);
-        //}
+        triggerLength = 0.5f;
+        chaseLength = 0.75f;
     }
 
     /// <summary>
@@ -333,6 +301,31 @@ public class Enemy : MovingEntity
 
         return damageDetails;
     }
+
+
+
+    public void LoadData(EnemyData data)
+    {
+        enemyData = data;
+
+        health = enemyData.currentHealth;
+        level = enemyData.level;
+        xpGivenOnDeath = enemyData.xpOnDeath;
+        transform.position = enemyData.position;
+    }
+
+    public void Save()
+    {
+        // Perform save
+        enemyData.ID = ID;
+        enemyData.currentHealth = health;
+        enemyData.level = level;
+        enemyData.xpOnDeath = xpGivenOnDeath;
+        enemyData.position = transform.position;
+        // Add to save data if not already in it
+        if (!SaveData.current.enemies.Contains(enemyData))
+            SaveData.current.enemies.Add(enemyData);
+    }
 }
 
 /// <summary>
@@ -388,4 +381,17 @@ public static class TraitDecision
         else
             return false;
     }
+}
+
+[System.Serializable]
+public class EnemyData
+{
+    public int ID;
+
+    public int currentHealth;
+
+    public Vector3 position;
+
+    public int level;
+    public int xpOnDeath;
 }
