@@ -14,8 +14,8 @@ public class GameOverStatistics : MonoBehaviour
 
     public void UpdateAllStats()
     {
-        health.text = "Maximum HP: " + GameManager.instance.maxHealth;
-        mana.text = "Maximum Mana: " + GameManager.instance.maxMana;
+        health.text = "Maximum HP: " + GameManager.instance.player.maxHealth;
+        mana.text = "Maximum Mana: " + GameManager.instance.player.maxMana;
         strength.text = "Total Strength: " + GameManager.instance.player.strength;
         toughness.text = "Total Toughness: " + GameManager.instance.player.toughness;
         gold.text = "Total Gold: " + GameManager.instance.totalGold;

@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
+    public AudioMixerGroup mixerGroup;
     public Sound[] sounds;
     private Dictionary<string, Sound> soundsSet;
     private Dictionary<string, Sound> music;
@@ -18,7 +20,7 @@ public class AudioManager : MonoBehaviour
         {
             sound.source = gameObject.AddComponent<AudioSource>();
             sound.source.clip = sound.clip;
-
+            sound.source.outputAudioMixerGroup = mixerGroup;
             sound.source.volume = sound.volume;
             sound.source.pitch = sound.pitch;
             sound.source.loop = sound.loop;

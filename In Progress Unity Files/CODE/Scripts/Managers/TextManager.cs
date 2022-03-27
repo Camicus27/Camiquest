@@ -21,16 +21,37 @@ public class TextManager : MonoBehaviour
     private Image[] optionHighlights = new Image[4];
     public Text continueKey;
 
+    // Save popup
+    public Image savePopupBox;
+    public GameObject saveUI;
+    public Text fileSavedText;
+    public Text nameText;
+    public Text hpText;
+    public Text lvlText;
+    public Text mpText;
+    public GameObject saveCancelButtons;
+    public Image saveOption;
+    public Image cancelOption;
+
     // Logic
     private int lettersPerSecond = 25;
     private static bool stopTyping;
     private static bool allowStopTyping;
     private static bool cancel;
+    // To be used with CancelOnBool. Caller controls this bool to cancel when desired
+    public static bool Continue;
+
     private bool selectingOptions;
     private bool selectionChosen;
 
     private float hangTime;
     private float timeCheckpoint;
+
+    public int saveOptionPosition;
+    private bool isSaveSelecting;
+    private bool saveSelectionChosen;
+
+    
 
 
     /// <summary>
@@ -78,7 +99,47 @@ public class TextManager : MonoBehaviour
         {
             stopTyping = true;
         }
-            
+
+        // When selecting in the save menu, this controls the highlight of which
+        // option is currently selected.
+        if (isSaveSelecting)
+        {
+            // Select current option
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                if (saveOptionPosition == 1)
+                    GameManager.instance.PlaySound("ButtonSelect");
+                saveOption.enabled = false;
+                cancelOption.enabled = false;
+                saveSelectionChosen = true;
+                isSaveSelecting = false;
+                return;
+            }
+
+            // Scroll through options
+            if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow) ||
+            Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                GameManager.instance.PlaySound("ButtonNavigate");
+
+                if (saveOptionPosition == 0)
+                    saveOptionPosition++;
+                else
+                    saveOptionPosition--;
+            }
+
+            // Highlight the correct option
+            if (saveOptionPosition == 0)
+            {
+                saveOption.enabled = true;
+                cancelOption.enabled = false;
+            }
+            else
+            {
+                saveOption.enabled = false;
+                cancelOption.enabled = true;
+            }
+        }
 
         // When selecting from some options, this controls the highlight of which
         // option is currently selected for a prompt box.
@@ -209,30 +270,18 @@ public class TextManager : MonoBehaviour
         yield return TypeText(msg, infoText, voice, lettersPerSec, isSkippable);
         infoBox.enabled = false; infoText.enabled = false;
     }
+    public IEnumerator DisplayTextCancelOnBool(string msg, string voice, int lettersPerSec, bool isSkippable)
+    {
+        cancel = false;
+
+        infoBox.enabled = true; infoText.enabled = true;
+        yield return TypeTextCancelOnBool(msg, infoText, voice, lettersPerSec, isSkippable);
+        infoBox.enabled = false; infoText.enabled = false;
+    }
+
 
     // ----------------------------------------------------------------------------------------------------------------------------------------------
 
-    public void ToggleStatsBox()
-    {
-        if (statsBox.enabled)
-        {
-            statsBox.enabled = false;
-            statsText.enabled = false;
-        }
-        else
-        {
-            statsBox.enabled = true;
-            statsText.enabled = true;
-        }
-            
-    }
-
-    public void UpdateStatsText(string text)
-    {
-        statsText.text = text;
-    }
-
-    // ----------------------------------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
     /// Shows a prompt for the player and by the end of the prompt,
@@ -312,6 +361,85 @@ public class TextManager : MonoBehaviour
     }
     private bool SelectionChosen() { return selectionChosen; }
 
+
+    // ----------------------------------------------------------------------------------------------------------------------------------------------
+
+    public void ToggleStatsBox()
+    {
+        if (statsBox.enabled)
+        {
+            statsBox.enabled = false;
+            statsText.enabled = false;
+        }
+        else
+        {
+            statsBox.enabled = true;
+            statsText.enabled = true;
+        }
+    }
+
+    public void UpdateStatsText(string text)
+    {
+        statsText.text = text;
+    }
+
+
+    // ----------------------------------------------------------------------------------------------------------------------------------------------
+
+    public IEnumerator ActivateSaveMenu()
+    {
+        UpdatePlayerInfoText();
+        savePopupBox.enabled = true;
+        saveCancelButtons.SetActive(true);
+        saveUI.SetActive(true);
+        isSaveSelecting = true;
+
+        // Wait for player to make selection
+        yield return new WaitUntil(SaveSelectionChosen);
+
+        // saveOptionPosition now has the chosen selection to be handled by save state
+        
+    }
+    private bool SaveSelectionChosen() { return saveSelectionChosen; }
+
+    private void UpdatePlayerInfoText()
+    {
+        nameText.text = GameManager.instance.player.playerName;
+        hpText.text = "Max HP: " + GameManager.instance.player.maxHealth.ToString();
+        mpText.text = "Max MP: " + GameManager.instance.player.maxMana.ToString();
+        lvlText.text = "Level: " + GameManager.instance.player.level.ToString();
+    }
+
+    public IEnumerator FileSaved()
+    {
+        saveCancelButtons.SetActive(false);
+        fileSavedText.enabled = true;
+
+        yield return new WaitForSeconds(1.25f);
+
+        DeactivateSaveMenu();
+    }
+
+    public void DeactivateSaveMenu()
+    {
+        savePopupBox.enabled = false;
+        fileSavedText.enabled = false;
+        saveUI.SetActive(false);
+        isSaveSelecting = false;
+        saveSelectionChosen = false;
+    }
+
+    /*
+    public Image savePopupBox;
+    public Text firstInteractionTextBox;
+    public GameObject saveUI;
+    public Text fileSavedText;
+    public GameObject saveCancelButtons;
+    nameText;
+    public Text hpText;
+    public Text lvlText;
+    public Text mpText;
+     */
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -423,4 +551,44 @@ public class TextManager : MonoBehaviour
     {
         continueKey.enabled = false;
     }
+
+
+    public IEnumerator TypeTextCancelOnBool(string text, Text textBox, string voice, int lettersPerSec, bool isSkippable)
+    {
+        // Setup
+        cancel = false;
+        allowStopTyping = isSkippable;
+        stopTyping = true;
+        textBox.text = "";
+        yield return new WaitForSeconds(0.001f);
+        stopTyping = false;
+
+        // Get all letters and iterate
+        foreach (char letter in text.ToCharArray())
+        {
+            if (cancel)
+            {
+                textBox.text = "";
+                yield break;
+            }
+            if (stopTyping)
+            {
+                // Type rest of sentence
+                textBox.text = text;
+                GameManager.instance.PlaySound(voice);
+                break;
+            }
+            else
+            {
+                // Type next letter
+                textBox.text += letter;
+                if (letter != ' ')
+                    GameManager.instance.PlaySound(voice);
+                yield return new WaitForSeconds(1f / lettersPerSec);
+            }
+        }
+
+        yield return new WaitUntil(OnCancel);
+    }
+    private bool OnCancel() { return Continue; }
 }

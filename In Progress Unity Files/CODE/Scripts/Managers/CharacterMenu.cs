@@ -17,129 +17,343 @@ public class CharacterMenu : MonoBehaviour
     private bool hasMoreThanFourMoves;
     private const float MAX_XP = 695;
     private const float MIN_XP = 40;
-    //private const float ANIMATE_SPEED = 0.01f;
 
     // All moves popup
-    public GameObject allMoves;
+    public GameObject allMovesPopup;
     public GameObject displaysContainer;
     public Text nameText, descriptionText, mp_Text, damageText;
+    [SerializeField]
+    private List<GameObject> movePositionHighlights;
     // Logic
     private bool isMovesMenuOpen;
-    private bool isSelectingPosition;
+    private bool isSelectingMove;
     private int selectedMove;
     private int movePosition;
-    public List<GameObject> movePositionHighlights;
+
+    // Potion selecting
+    public GameObject useAPotion;
+    public GameObject cancelPotion;
+    [SerializeField]
+    private List<GameObject> potionPositionHighlights;
+    // Logic
+    private bool isSelectingPotion;
+    private int selectedPotion;
+
+    // Settings popup
+    public SettingsController settings;
+    public Text xMark;
+    public Image fsHighlight;
+    public Image volumeHighlight;
+    public Text volumeControlArrows;
+    public List<Image> volumeBars;
+    private bool isChangingVolume;
+    private int selection;
+    private int volumeBarNumber;
+    private bool isAdjustingSettings;
+
+    /// <summary>
+    /// Set to a default state
+    /// </summary>
+    public void Open()
+    {
+        allMovesPopup.SetActive(false);
+        isMovesMenuOpen = false;
+        movePosition = -1;
+        UpdateDisplayedSelection();
+        isSelectingMove = false;
+
+        useAPotion.SetActive(true);
+        cancelPotion.SetActive(false);
+        selectedPotion = -1;
+        UpdateHighlightedPotion();
+        isSelectingPotion = false;
+
+        UpdateMenu();
+    }
 
     private void Update()
     {
-        // Close the main menu if X is pressed
-        if (!isMovesMenuOpen && Input.GetKeyDown(KeyCode.X)) { GameManager.instance.CharacterMenuToggle(); return; }
-
-        // Check if player currently has >4 moves
-        if (hasMoreThanFourMoves)
+        // Default inventory state
+        if (!isSelectingMove && !isMovesMenuOpen && !isAdjustingSettings && !isSelectingPotion)
         {
-            // Check if the all moves popup menu is not open
-            if (!isMovesMenuOpen)
+            // Open move selection
+            if (hasMoreThanFourMoves && Input.GetKeyDown(KeyCode.E))
             {
+                GameManager.instance.PlaySound("ButtonSelect");
+                // Open up the move selection screen
+                allMovesPopup.SetActive(true);
+                isMovesMenuOpen = true;
+                selectedMove = 0;
+                UpdateDisplayedMove();
+                return;
+            }
+
+            // Open settings
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                GameManager.instance.PlaySound("ButtonSelect");
+                isAdjustingSettings = true;
+                GameManager.instance.settingsMenuActive = true;
+                settings.gameObject.SetActive(true);
+                UpdateSettingsDisplay();
+                return;
+            }
+
+            // Start selecting a potion
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                GameManager.instance.PlaySound("ButtonSelect");
+                useAPotion.SetActive(false);
+                cancelPotion.SetActive(true);
+                // Open up the potion selection highlights
+                UpdateHighlightedPotion();
+                isSelectingPotion = true;
+                return;
+            }
+        }
+
+        // If selecting a potion
+        if (isSelectingPotion)
+        {
+            // Cancel potion selection
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                GameManager.instance.PlaySound("ButtonCancel");
+                useAPotion.SetActive(true);
+                cancelPotion.SetActive(false);
+                selectedPotion = -1;
+                UpdateHighlightedPotion();
+                isSelectingPotion = false;
+                return;
+            }
+
+            // Confirm potion selection
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                GameManager.instance.PlaySound("ButtonSelect");
+                // Check if we can consume, and do if yes
+                switch (selectedPotion)
+                {
+                    case 0:
+                        GameManager.instance.player.TryConsumeItem(new Item("Health"));
+                        break;
+                    case 1:
+                        GameManager.instance.player.TryConsumeItem(new Item("Mana"));
+                        break;
+                }
+                // Update main menu display
+                UpdateMenu();
+                useAPotion.SetActive(true);
+                cancelPotion.SetActive(false);
+                // Turn off all highlights
+                selectedPotion = -1;
+                UpdateHighlightedPotion();
+                isSelectingPotion = false;
+                return;
+            }
+
+            // Scroll through potion options
+            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                GameManager.instance.PlaySound("ButtonNavigate");
+                if (selectedPotion == 0)
+                    selectedPotion++;
+                else
+                    selectedPotion--;
+            }
+            if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                GameManager.instance.PlaySound("ButtonNavigate");
+                if (selectedPotion == 1)
+                    selectedPotion--;
+                else
+                    selectedPotion++;
+            }
+            UpdateHighlightedPotion();
+        }
+
+
+        // All moves popup menu is open
+        if (hasMoreThanFourMoves && isMovesMenuOpen)
+        {
+            // Check if just scrolling through the menu
+            if (!isSelectingMove)
+            {
+                // Close the move selection screen
+                if (Input.GetKeyDown(KeyCode.X))
+                {
+                    GameManager.instance.PlaySound("ButtonCancel");
+                    allMovesPopup.SetActive(false);
+                    isMovesMenuOpen = false;
+                    return;
+                }
+                // Close display and start selecting a spot
                 if (Input.GetKeyDown(KeyCode.Z))
                 {
                     GameManager.instance.PlaySound("ButtonSelect");
-                    // Open up the move selection screen
-                    allMoves.SetActive(true);
-                    isMovesMenuOpen = true;
-                    selectedMove = 0;
-                    UpdateDisplayedMove();
+                    displaysContainer.SetActive(false);
+                    movePosition = 0;
+                    isSelectingMove = true;
                     return;
                 }
+
+                // Scroll through moves
+                if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (selectedMove == 0)
+                        selectedMove = GameManager.instance.player.allMoves.Count - 1;
+                    else
+                        selectedMove--;
+                }
+                if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (selectedMove == GameManager.instance.player.allMoves.Count - 1)
+                        selectedMove = 0;
+                    else
+                        selectedMove++;
+                }
+                UpdateDisplayedMove();
             }
-            // All moves popup menu is open
+            // Menu is open and being viewed
             else
             {
-                // Check if just scrolling through the menu
-                if (!isSelectingPosition)
+                // Cancel position selection
+                if (Input.GetKeyDown(KeyCode.X))
                 {
-                    // Close the move selection screen
-                    if (Input.GetKeyDown(KeyCode.X))
-                    {
-                        GameManager.instance.PlaySound("ButtonCancel");
-                        allMoves.SetActive(false);
-                        isMovesMenuOpen = false;
-                        return;
-                    }
-                    // Close display and start selecting a spot
-                    if (Input.GetKeyDown(KeyCode.Z))
-                    {
-                        GameManager.instance.PlaySound("ButtonSelect");
-                        displaysContainer.SetActive(false);
-                        movePosition = 0;
-                        isSelectingPosition = true;
-                        return;
-                    }
-
-                    // Scroll through moves
-                    if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
-                    {
-                        GameManager.instance.PlaySound("ButtonNavigate");
-                        if (selectedMove == 0)
-                            selectedMove = GameManager.instance.player.allMoves.Count - 1;
-                        else
-                            selectedMove--;
-                    }
-                    if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
-                    {
-                        GameManager.instance.PlaySound("ButtonNavigate");
-                        if (selectedMove == GameManager.instance.player.allMoves.Count - 1)
-                            selectedMove = 0;
-                        else
-                            selectedMove++;
-                    }
-                    UpdateDisplayedMove();
-                }
-                // Menu is open and being viewed
-                else
-                {
-                    // Cancel position selection
-                    if (Input.GetKeyDown(KeyCode.X))
-                    {
-                        GameManager.instance.PlaySound("ButtonCancel");
-                        displaysContainer.SetActive(true);
-                        isSelectingPosition = false;
-                        return;
-                    }
-                    // Confirm position selection
-                    if (Input.GetKeyDown(KeyCode.Z))
-                    {
-                        GameManager.instance.PlaySound("ButtonSelect");
-                        // Put move in active move set
-                        GameManager.instance.player.SetMoveInMoveSet(GameManager.instance.player.allMoves[selectedMove], movePosition);
-                        // Update main menu display
-                        UpdateMenu();
-                        // Turn off all highlights
-                        movePosition = -1;
-                        UpdateDisplayedSelection();
-                        displaysContainer.SetActive(true);
-                        isSelectingPosition = false;
-                        return;
-                    }
-
-                    // Scroll through position options
-                    if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
-                    {
-                        GameManager.instance.PlaySound("ButtonNavigate");
-                        if (movePosition == 0)
-                            movePosition = 3;
-                        else
-                            movePosition--;
-                    }
-                    if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
-                    {
-                        GameManager.instance.PlaySound("ButtonNavigate");
-                        if (movePosition == 3)
-                            movePosition = 0;
-                        else
-                            movePosition++;
-                    }
+                    GameManager.instance.PlaySound("ButtonCancel");
+                    // Turn off all highlights
+                    movePosition = -1;
                     UpdateDisplayedSelection();
+                    displaysContainer.SetActive(true);
+                    isSelectingMove = false;
+                    return;
+                }
+                // Confirm position selection
+                if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    GameManager.instance.PlaySound("ButtonSelect");
+                    // Put move in active move set
+                    GameManager.instance.player.SetMoveInMoveSet(GameManager.instance.player.allMoves[selectedMove], movePosition);
+                    // Update main menu display
+                    UpdateMenu();
+                    // Turn off all highlights
+                    movePosition = -1;
+                    UpdateDisplayedSelection();
+                    displaysContainer.SetActive(true);
+                    isSelectingMove = false;
+                    return;
+                }
+
+                // Scroll through position options
+                if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (movePosition == 0)
+                        movePosition = 3;
+                    else
+                        movePosition--;
+                }
+                if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (movePosition == 3)
+                        movePosition = 0;
+                    else
+                        movePosition++;
+                }
+                UpdateDisplayedSelection();
+            }
+        }
+
+        // Settings menu is open
+        if (isAdjustingSettings)
+        {
+            if (!isChangingVolume)
+            {
+                if (Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.Tab))
+                {
+                    GameManager.instance.PlaySound("ButtonCancel");
+                    selection = 0;
+                    GameManager.instance.settingsMenuActive = false;
+                    isAdjustingSettings = false;
+                    settings.gameObject.SetActive(false);
+                    return;
+                }
+
+                // Check for scrolling between options
+                if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow) ||
+                    Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (selection == 0)
+                    {
+                        selection = 1;
+                        volumeHighlight.enabled = true;
+                        fsHighlight.enabled = false;
+                    }
+                    else
+                    {
+                        selection = 0;
+                        volumeHighlight.enabled = false;
+                        fsHighlight.enabled = true;
+                    }
+                }
+
+                // Check for selecting option
+                if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    GameManager.instance.PlaySound("ButtonSelect");
+                    // FS button toggle
+                    if (selection == 0)
+                    {
+                        settings.isFullscreen = !settings.isFullscreen;
+                        settings.SetScreenMode();
+
+                        if (settings.isFullscreen)
+                            xMark.enabled = true;
+                        else
+                            xMark.enabled = false;
+                    }
+                    // Start changing volume
+                    else
+                    {
+                        volumeHighlight.enabled = false;
+                        volumeControlArrows.enabled = true;
+                        isChangingVolume = true;
+                    }
+                }
+            }
+            else
+            {
+                // Check for scrolling
+                if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (0 < volumeBarNumber && volumeBarNumber <= 8)
+                        volumeBarNumber--;
+
+                    settings.SetVolume(volumeBarNumber);
+                    SetVolumeBars();
+                }
+                if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    GameManager.instance.PlaySound("ButtonNavigate");
+                    if (0 <= volumeBarNumber && volumeBarNumber < 8)
+                        volumeBarNumber++;
+
+                    settings.SetVolume(volumeBarNumber);
+                    SetVolumeBars();
+                }
+
+                // Check for confirming
+                if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.X))
+                {
+                    GameManager.instance.PlaySound("ButtonSelect");
+                    volumeHighlight.enabled = true;
+                    volumeControlArrows.enabled = false;
+                    isChangingVolume = false;
                 }
             }
         }
@@ -185,9 +399,9 @@ public class CharacterMenu : MonoBehaviour
         }
 
         // Player Info
-        hpText.text = GameManager.instance.health + " / " + GameManager.instance.maxHealth;
-        mpText.text = GameManager.instance.MP + " / " + GameManager.instance.maxMana;
-        levelText.text = GameManager.instance.level.ToString();
+        hpText.text = GameManager.instance.player.health + " / " + GameManager.instance.player.maxHealth;
+        mpText.text = GameManager.instance.player.MP + " / " + GameManager.instance.player.maxMana;
+        levelText.text = GameManager.instance.player.level.ToString();
         goldText.text = GameManager.instance.GetCurrentGold().ToString();
         strText.text = player.strength.ToString();
         tufText.text = player.toughness.ToString();
@@ -199,6 +413,68 @@ public class CharacterMenu : MonoBehaviour
 
         // Inventory
         UpdateItemCounts();
+    }
+
+    private void UpdateSettingsDisplay()
+    {
+        // Mark the full screen button
+        settings.isFullscreen = Screen.fullScreen;
+        if (settings.isFullscreen)
+            xMark.enabled = true;
+        else
+            xMark.enabled = false;
+
+        // Highlight only the full screen button
+        fsHighlight.enabled = true;
+        volumeHighlight.enabled = false;
+        volumeControlArrows.enabled = false;
+
+        // Set the volume bars correctly
+        SetVolumeBars();
+    }
+
+    private void SetVolumeBars()
+    {
+        settings.audioMixer.GetFloat("Volume", out float vol);
+
+        switch ((int)vol)
+        {
+            case 0:
+                volumeBarNumber = 8;
+                break;
+            case -4:
+                volumeBarNumber = 7;
+                break;
+            case -10:
+                volumeBarNumber = 6;
+                break;
+            case -15:
+                volumeBarNumber = 5;
+                break;
+            case -20:
+                volumeBarNumber = 4;
+                break;
+            case -30:
+                volumeBarNumber = 3;
+                break;
+            case -40:
+                volumeBarNumber = 2;
+                break;
+            case -50:
+                volumeBarNumber = 1;
+                break;
+            case -80:
+                volumeBarNumber = 0;
+                break;
+        }
+
+        for (int i = 0; i < 9; i++)
+        {
+            if (i <= volumeBarNumber)
+                volumeBars[i].color = settings.enabledColor;
+            else
+                volumeBars[i].color = settings.disabledColor;
+        }
     }
 
     private void UpdateDisplayedMove()
@@ -218,6 +494,18 @@ public class CharacterMenu : MonoBehaviour
                 movePositionHighlights[i].SetActive(true);
             else
                 movePositionHighlights[i].SetActive(false);
+        }
+    }
+
+    private void UpdateHighlightedPotion()
+    {
+        // Highlight the potion
+        for (int i = 0; i < 2; i++)
+        {
+            if (i == selectedPotion)
+                potionPositionHighlights[i].SetActive(true);
+            else
+                potionPositionHighlights[i].SetActive(false);
         }
     }
 
