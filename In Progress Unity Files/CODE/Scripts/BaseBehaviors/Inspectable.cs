@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class Inspectable : Interactable
 {
+    public int ID;
+
     public string[] firstInteractMessages;
     public string[] secondInteractMessages;
     public string[] otherInteractMessages;
@@ -12,7 +14,7 @@ public class Inspectable : Interactable
     public int goldToGive;
     protected int interactNumber = 0;
 
-    private static bool hasInteractedWithSomethingTooMuch = false;
+    public InspectData inspectData;
 
     /// <summary>
     /// Freezes player, triggers an inspection
@@ -45,6 +47,8 @@ public class Inspectable : Interactable
             // Remove interactability
             isInteractable = false;
             isInRange = false;
+            interactNumber++;
+            Save();
             yield break;
         }
         // Multiple interactions possible
@@ -82,13 +86,13 @@ public class Inspectable : Interactable
                     interactNumber++;
                 }
                 // Second interaction
-                else if (secondInteractMessages.Length > 0 && 0 < interactNumber && interactNumber < 25)
+                else if (secondInteractMessages.Length > 0 && interactNumber == 1)
                 {
                     foreach (string message in secondInteractMessages)
                         yield return GameManager.instance.ShowTextInfo(message);
                     interactNumber++;
                 }
-                // Third - Twenty-Fifth interaction
+                // Second - Twenty-Fifth interaction
                 else if (otherInteractMessages.Length > 0 && 0 < interactNumber && interactNumber < 25)
                 {
                     foreach (string message in otherInteractMessages)
@@ -96,13 +100,15 @@ public class Inspectable : Interactable
                     interactNumber++;
                 }
                 // Twenty-Sixth interaction (only happens once)
-                else if (!hasInteractedWithSomethingTooMuch && 0 < interactNumber && interactNumber < 25)
+                else if (SaveData.current.hasInteractedWithSomethingTooMuch && 0 < interactNumber && interactNumber < 25)
                 {
                     string message = "Yeesh. Can you PLEASE stop interacting with this? It's exhausting to display.";
                     yield return GameManager.instance.ShowTextInfo(message);
-                    message = "You interacted with this thing 25 times? The dialog was that interesting? Get a life, get a hobby, get SOMETHING.";
+                    message = "You interacted with this thing 25 times? The dialog was that interesting? Well that is actually kinda flattering.";
                     yield return GameManager.instance.ShowTextInfo(message);
-                    message = "You know what? You can't interact with this thing anymore, I don't even care. You're done.";
+                    message = "Wait, no, what was I saying? Oh yeah, stop interacting with this!";
+                    yield return GameManager.instance.ShowTextInfo(message);
+                    message = "You know what? You can't interact with it anymore, I don't even care. You're done.";
                     yield return GameManager.instance.ShowTextInfo(message);
 
                     // Remove interactability
@@ -128,13 +134,46 @@ public class Inspectable : Interactable
 
                     yield return new WaitForSeconds(1.5f);
 
-                    hasInteractedWithSomethingTooMuch = true;
+                    SaveData.current.hasInteractedWithSomethingTooMuch = true;
                 }
             }
+
+            Save();
         }
 
         // Resume the player's movement
         GameManager.instance.ResumePlayerMovement();
         currentlyInteracting = false;
     }
+
+    public void LoadData(InspectData data)
+    {
+        inspectData = data;
+
+        interactNumber = inspectData.interactNumber;
+
+        // Disable if only one interaction and have already done so
+        if (canOnlyHaveOneInteraction && interactNumber > 0)
+        {
+            isInteractable = false;
+            isInRange = false;
+        }
+    }
+
+    public void Save()
+    {
+        inspectData.ID = ID;
+        inspectData.interactNumber = interactNumber;
+
+        // Add to save data if not already in it
+        if (!SaveData.current.inspections.Contains(inspectData))
+            SaveData.current.inspections.Add(inspectData);
+    }
+}
+
+[System.Serializable]
+public class InspectData
+{
+    public int ID;
+    public int interactNumber;
 }
