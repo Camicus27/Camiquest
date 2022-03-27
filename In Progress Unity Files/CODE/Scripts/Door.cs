@@ -15,12 +15,15 @@ using UnityEngine;
 public class Door : Interactable
 {
     private Animator animate;
+    public int ID;
     public bool leverLocked = false;
     public Lever[] levers;
     private bool hasInteracted = false;
     private bool firstOpenAfterUnlock = true;
     public bool isOpen = false;
     private string message;
+
+    public DoorData doorData;
 
     void Awake()
     {
@@ -100,6 +103,8 @@ public class Door : Interactable
 
         // Restore original state
         currentlyInteracting = false;
+
+        Save();
     }
 
     private bool AllLeversOn()
@@ -112,4 +117,36 @@ public class Door : Interactable
         }
         return numberOfLeversOn == levers.Length;
     }
+
+    public void LoadData(DoorData data)
+    {
+        doorData = data;
+
+        hasInteracted = doorData.hasInteracted;
+        firstOpenAfterUnlock = doorData.firstOpenAfterUnlock;
+        isOpen = doorData.isOpen;
+        if (isOpen)
+            animate.SetTrigger("UseDoor");
+    }
+
+    public void Save()
+    {
+        // Perform save
+        doorData.ID = ID;
+        doorData.hasInteracted = hasInteracted;
+        doorData.firstOpenAfterUnlock = firstOpenAfterUnlock;
+        doorData.isOpen = isOpen;
+        // Add to save data if not already in it
+        if (!SaveData.current.doors.Contains(doorData))
+            SaveData.current.doors.Add(doorData);
+    }
+}
+
+[System.Serializable]
+public class DoorData
+{
+    public int ID;
+    public bool hasInteracted;
+    public bool firstOpenAfterUnlock;
+    public bool isOpen;
 }

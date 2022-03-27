@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -9,11 +8,14 @@ using UnityEngine;
 /// </summary>
 public class Lever : Interactable
 {
+    public int ID;
     public bool ON = false;
     public bool behindTheScenesEvent = false;
     private bool hasBeenTurnedOnOnce = false;
     public bool dontDisplayMessage;
     public string message;
+
+    public LeverData leverData;
 
     protected override void OnInteraction()
     {
@@ -55,6 +57,8 @@ public class Lever : Interactable
 
         // Restore original state
         currentlyInteracting = false;
+
+        Save();
     }
 
     protected override void Update()
@@ -67,4 +71,42 @@ public class Lever : Interactable
             base.Update();
         }
     }
+
+    public void LoadData(LeverData data)
+    {
+        ON = data.ON;
+        // Set to on position if on
+        if (ON)
+        {
+            transform.rotation = Quaternion.Inverse(transform.rotation);
+            transform.position = new Vector3(transform.position.x + 0.104f, transform.position.y, transform.position.z);
+        }
+        behindTheScenesEvent = data.behindTheScenesEvent;
+        hasBeenTurnedOnOnce = data.hasBeenTurnedOnOnce;
+        dontDisplayMessage = data.dontDisplayMessage;
+    }
+
+    public void Save()
+    {
+        // Perform save
+        leverData.ID = ID;
+        leverData.ON = ON;
+        leverData.behindTheScenesEvent = behindTheScenesEvent;
+        leverData.hasBeenTurnedOnOnce = hasBeenTurnedOnOnce;
+        leverData.dontDisplayMessage = dontDisplayMessage;
+
+        // Add to save data if not already in it
+        if (!SaveData.current.levers.Contains(leverData))
+            SaveData.current.levers.Add(leverData);
+    }
+}
+
+[System.Serializable]
+public class LeverData
+{
+    public int ID;
+    public bool ON;
+    public bool behindTheScenesEvent;
+    public bool hasBeenTurnedOnOnce;
+    public bool dontDisplayMessage;
 }
